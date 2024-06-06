@@ -24,7 +24,7 @@ namespace WebCrawler
             Client.Timeout = TimeSpan.FromSeconds(10);
             try
             {
-                HttpResponseMessage response = await Client.GetAsync(url);
+                HttpResponseMessage response =  Client.GetAsync(url);
                 return response.Content.ToString();
             }
             catch (Exception ex)
@@ -72,7 +72,7 @@ namespace WebCrawler
             foreach (var url in urls)
             {
                 int tentativas = 0;
-                while (tentativas < 3) // Limite de 3 tentativas por URL
+                while (tentativas < 3)
                 {
                     if (gerenciador.VerificarSeJaFoiVisitado(url).Result)
                     {
@@ -106,17 +106,17 @@ namespace WebCrawler
                         break;
                     }
 
-                    // Escolha aleatória de links para evitar travamentos
+                    
                     var linksAleatorios = EscolherLinksAleatorios(links.ToList());
                     await Executar(linksAleatorios, informacaoProcurada);
 
-                    break; // Sair do loop enquanto, já que a página foi processada com sucesso
+                    break; 
                 }
             }
         }
         static List<string> EscolherLinksAleatorios(List<string> links)
         {
-            int numLinksParaEscolher = Math.Min(5, links.Count); // Limita a escolha a 5 links
+            int numLinksParaEscolher = Math.Min(5, links.Count);
             var linksAleatorios = new List<string>();
             var random = new Random();
 
@@ -124,7 +124,7 @@ namespace WebCrawler
             {
                 int indiceAleatorio = random.Next(links.Count);
                 linksAleatorios.Add(links[indiceAleatorio]);
-                links.RemoveAt(indiceAleatorio); // Remove o link escolhido para evitar duplicações
+                links.RemoveAt(indiceAleatorio); 
             }
 
             return linksAleatorios;
