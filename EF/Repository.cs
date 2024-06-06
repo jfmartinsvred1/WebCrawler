@@ -1,12 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WebCrawler.Models;
 
 namespace WebCrawler.EF
 {
-    internal class Repository
+    public class Repository
     {
+        public WebCrawlerContext Context { get; set; }
+
+        public Repository(WebCrawlerContext context)
+        {
+            Context = context;
+        }
+
+
+        public async void Create(Site site)
+        {
+            try
+            {
+                Context.Sites.AddAsync(site);
+                Context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
     }
 }
