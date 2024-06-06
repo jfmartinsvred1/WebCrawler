@@ -5,16 +5,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebCrawler.Models;
 
-namespace WebCrawler
+namespace WebCrawler.EF
 {
-    public class WebCrawlerContext:DbContext
+    public class WebCrawlerContext : DbContext
     {
         private string ConnectionString { get; set; }
 
+        public DbSet<Site> Sites { get; set; }
         public WebCrawlerContext()
         {
-            
+
         }
 
         public WebCrawlerContext(IConfiguration configuration)
@@ -24,7 +26,7 @@ namespace WebCrawler
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql(this.ConnectionString,ServerVersion.AutoDetect(this.ConnectionString));
+            optionsBuilder.UseMySql(ConnectionString, ServerVersion.AutoDetect(ConnectionString));
         }
     }
 }
