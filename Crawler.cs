@@ -1,12 +1,15 @@
 ﻿using HtmlAgilityPack;
 using WebCrawler.EF;
 using WebCrawler.Models;
+using log4net;
+using log4net.Config;
 namespace WebCrawler
 {
     public class Crawler
     {
         private HttpClient Client { get; set; }
         Repository Repository { get; set; }
+        private readonly static ILog log = LogManager.GetLogger(typeof(Crawler));
 
         public Crawler(HttpClient httpClient,Repository repository)
         {
@@ -16,20 +19,24 @@ namespace WebCrawler
 
         public string ExtrairInformacoes(string html)
         {
+            BasicConfigurator.Configure();
+            log.Info("ExtrairInformacoes");
             return $"Informações encontradas: {html[..100]}";
         }
 
         public async Task<string> FazerRequisicao(string url)
         {
-            Client.Timeout = TimeSpan.FromSeconds(10);
+            Client.Timeout = TimeSpan.FromSeconds(5);
+            BasicConfigurator.Configure();
+            log.Info("Fazendo Requisicao");
             try
             {
-                HttpResponseMessage response = await Client.GetAsync(url);
+                HttpResponseMessage response =  await Client.GetAsync(url);
                 return response.Content.ToString();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                log.Error(ex);
                 return null;
             }
         }
@@ -39,6 +46,8 @@ namespace WebCrawler
             var links = new List<string>();
             var web = new HtmlDocument();
             web.LoadHtml(html);
+            BasicConfigurator.Configure();
+            log.Info("Extraindo Links");
 
             var anchorTags = web.DocumentNode.SelectNodes("//a[@href]");
             if (anchorTags != null)
@@ -56,8 +65,8 @@ namespace WebCrawler
                         }
                         catch (UriFormatException e)
                         {
-                            Console.WriteLine("Erro ao processar URL: " + href);
-                            Console.WriteLine(e.Message);
+                            log.Error(e);
+                            
                         }
                     }
                 }
@@ -68,11 +77,12 @@ namespace WebCrawler
         {
             GerenciadorDeVisitados gerenciador = new GerenciadorDeVisitados();
 
-
+            BasicConfigurator.Configure();
+            log.Info("Executando");
             foreach (var url in urls)
             {
                 int tentativas = 0;
-                while (tentativas < 3) // Limite de 3 tentativas por URL
+                while (tentativas < 3)
                 {
                     if (gerenciador.VerificarSeJaFoiVisitado(url).Result)
                     {
@@ -80,7 +90,7 @@ namespace WebCrawler
                         break;
                     }
 
-                    Console.WriteLine("Visitando: " + url);
+                    log.Info("Visitando: " + url);
                     var html = await FazerRequisicao(url);
 
                     if (string.IsNullOrEmpty(html))
@@ -106,25 +116,26 @@ namespace WebCrawler
                         break;
                     }
 
-                    // Escolha aleatória de links para evitar travamentos
+                    
                     var linksAleatorios = EscolherLinksAleatorios(links.ToList());
                     await Executar(linksAleatorios, informacaoProcurada);
 
-                    break; // Sair do loop enquanto, já que a página foi processada com sucesso
+                    break; 
                 }
             }
         }
         static List<string> EscolherLinksAleatorios(List<string> links)
         {
-            int numLinksParaEscolher = Math.Min(5, links.Count); // Limita a escolha a 5 links
+            int numLinksParaEscolher = Math.Min(5, links.Count);
             var linksAleatorios = new List<string>();
             var random = new Random();
-
+            BasicConfigurator.Configure();
+            log.Info("Escolhendo Links");
             for (int i = 0; i < numLinksParaEscolher; i++)
             {
                 int indiceAleatorio = random.Next(links.Count);
                 linksAleatorios.Add(links[indiceAleatorio]);
-                links.RemoveAt(indiceAleatorio); // Remove o link escolhido para evitar duplicações
+                links.RemoveAt(indiceAleatorio); 
             }
 
             return linksAleatorios;

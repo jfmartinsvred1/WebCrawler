@@ -3,6 +3,8 @@ using WebCrawler;
 using WebCrawler.EF;
 
 HttpClient client = new HttpClient();
+
+client.Timeout = TimeSpan.FromSeconds(10);
 var builder = new ConfigurationBuilder().AddUserSecrets<Program>();
 IConfiguration configuration = builder.Build();
 WebCrawlerContext context = new WebCrawlerContext(configuration);
