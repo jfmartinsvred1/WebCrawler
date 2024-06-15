@@ -1,4 +1,6 @@
-﻿using System;
+﻿using log4net;
+using log4net.Config;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,13 +11,15 @@ namespace WebCrawler
     public class GerenciadorDeVisitados
     {
         private readonly string filePath = "C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\visitados.txt";
+        private readonly ILog log = LogManager.GetLogger(typeof(GerenciadorDeVisitados));
         public GerenciadorDeVisitados()
         {
             
         }
         public async Task MarcarComoVisitadoAsync(string url)
         {
-
+            BasicConfigurator.Configure();
+            log.Info("Marcando Se Ja Foi Visitado");
             try
             {
                 using (StreamWriter sw = new StreamWriter(filePath, true))
@@ -27,14 +31,14 @@ namespace WebCrawler
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ocorreu um erro.");
-                Console.WriteLine(e.Message);
+                log.Error(e);
             }
         }
         public async Task<bool> VerificarSeJaFoiVisitado(string url)
         {
             bool found = false;
-
+            BasicConfigurator.Configure();
+            log.Debug("Verificando Se Ja Foi Visitado");
             try
             {
                 using (StreamReader sr = new StreamReader(filePath))
@@ -58,8 +62,7 @@ namespace WebCrawler
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ocorreu um erro.");
-                Console.WriteLine(e.Message);
+                log.Error(e);
                 return false;
             }
 
