@@ -8,36 +8,41 @@ namespace WebCrawler
     public class Crawler
     {
         private HttpClient Client { get; set; }
+        public string FilePathVisitados { get; set; }
         Repository Repository { get; set; }
         private readonly static ILog log = LogManager.GetLogger(typeof(Crawler));
 
-        public Crawler(HttpClient httpClient,Repository repository)
+
+        public Crawler(HttpClient client, string filePathVisitados, Repository repository)
         {
-            Client = httpClient;
+            Client = client;
+            FilePathVisitados = filePathVisitados;
             Repository = repository;
         }
 
         public string ExtrairInformacoes(string html)
         {
             BasicConfigurator.Configure();
-            log.Info("ExtrairInformacoes");
             return $"Informações encontradas: {html[..100]}";
         }
 
-        public async Task<string> FazerRequisicao(string url)
+                public async Task<string> FazerRequisicao(string url)
         {
-            Client.Timeout = TimeSpan.FromSeconds(5);
+            //Client.Timeout = TimeSpan.FromSeconds(5);
+            //comentei esse timeout aqui po que ele gera erro, voce ja configurou no inicio na configuracao do httpclient
             BasicConfigurator.Configure();
-            log.Info("Fazendo Requisicao");
+
             try
             {
                 HttpResponseMessage response =  await Client.GetAsync(url);
-                return response.Content.ToString();
+                response.EnsureSuccessStatusCode();
+                var responsebody = await response.Content.ReadAsStringAsync();
+                return responsebody;
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                log.Error(ex);
-                return null;
+                Console.WriteLine("Erro na requisição " + ex.Message);
+                return string.Empty;
             }
         }
 
@@ -47,7 +52,6 @@ namespace WebCrawler
             var web = new HtmlDocument();
             web.LoadHtml(html);
             BasicConfigurator.Configure();
-            log.Info("Extraindo Links");
 
             var anchorTags = web.DocumentNode.SelectNodes("//a[@href]");
             if (anchorTags != null)
@@ -63,9 +67,9 @@ namespace WebCrawler
                             Uri absoluteUri = new Uri(baseUri, href);
                             links.Add(absoluteUri.ToString());
                         }
-                        catch (UriFormatException e)
+                        catch (Exception ex)
                         {
-                            log.Error(e);
+                            Console.WriteLine("Erro ao extrair links " + ex.Message);
                             
                         }
                     }
@@ -75,29 +79,31 @@ namespace WebCrawler
         }
         public async Task Executar(List<string> urls, string informacaoProcurada)
         {
-            GerenciadorDeVisitados gerenciador = new GerenciadorDeVisitados();
+            GerenciadorDeVisitados gerenciador = new GerenciadorDeVisitados(FilePathVisitados);
 
             BasicConfigurator.Configure();
-            log.Info("Executando");
             foreach (var url in urls)
             {
                 int tentativas = 0;
                 while (tentativas < 3)
                 {
+                    if (url.Contains("https://l.facebook.com"))
+                    {
+                        break;
+                    }
                     if (gerenciador.VerificarSeJaFoiVisitado(url).Result)
                     {
                         Console.WriteLine("Site já visitado: " + url);
                         break;
                     }
 
-                    log.Info("Visitando: " + url);
                     var html = await FazerRequisicao(url);
 
                     if (string.IsNullOrEmpty(html))
                     {
                         Console.WriteLine("Erro ao obter o HTML de: " + url);
                         tentativas++;
-                        continue;
+                        break;
                     }
 
                     var informacoes = ExtrairInformacoes(html);
@@ -106,8 +112,8 @@ namespace WebCrawler
                         Console.WriteLine($"Informação encontrada em {url}: {informacaoProcurada}");
                     }
 
-                    Repository.Create(new Site(url, informacoes));
-                    gerenciador.MarcarComoVisitadoAsync(url);
+                    await Repository.Create(new Site(url, informacoes));
+                    await gerenciador.MarcarComoVisitadoAsync(url);
 
                     var links = ExtractLinks(html, url);
                     if (links.Length == 0)
@@ -130,7 +136,6 @@ namespace WebCrawler
             var linksAleatorios = new List<string>();
             var random = new Random();
             BasicConfigurator.Configure();
-            log.Info("Escolhendo Links");
             for (int i = 0; i < numLinksParaEscolher; i++)
             {
                 int indiceAleatorio = random.Next(links.Count);
@@ -142,4 +147,3 @@ namespace WebCrawler
         }
     }
 }
-

@@ -10,40 +10,41 @@ namespace WebCrawler
 {
     public class GerenciadorDeVisitados
     {
-        private readonly string filePath = "C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\visitados.txt";
+        public string FilePath { get; set; }
         private readonly ILog log = LogManager.GetLogger(typeof(GerenciadorDeVisitados));
-        public GerenciadorDeVisitados()
+        
+
+        public GerenciadorDeVisitados(string filePath)
         {
-            
+            FilePath = filePath;
         }
+
         public async Task MarcarComoVisitadoAsync(string url)
         {
             BasicConfigurator.Configure();
-            log.Info("Marcando Se Ja Foi Visitado");
             try
             {
-                using (StreamWriter sw = new StreamWriter(filePath, true))
+                using (StreamWriter sw = new StreamWriter(FilePath, true))
                 {
                     await sw.WriteLineAsync(url);
                 }
 
                 Console.WriteLine("Linha adicionada com sucesso.");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                log.Error(e);
+                Console.WriteLine("Erro ao marcar como visitado " + ex.Message);
             }
         }
         public async Task<bool> VerificarSeJaFoiVisitado(string url)
         {
             bool found = false;
             BasicConfigurator.Configure();
-            log.Debug("Verificando Se Ja Foi Visitado");
             try
             {
-                using (StreamReader sr = new StreamReader(filePath))
+                using (StreamReader sr = new StreamReader(FilePath))
                 {
-                    string line;
+                    string? line;
                     int lineNumber = 0;
 
                     while ((line = await sr.ReadLineAsync()) != null)
@@ -60,9 +61,9 @@ namespace WebCrawler
                 }
                 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                log.Error(e);
+                Console.WriteLine("Erro ao verificar se ja foi visitado " + ex.Message);
                 return false;
             }
 

@@ -12,12 +12,12 @@ namespace WebCrawler.EF
         }
 
 
-        public async void Create(Site site)
+        public async Task Create(Site site)
         {
             try
             {
                 Context.Sites.AddAsync(site);
-                Context.SaveChangesAsync();
+                await Context.SaveChangesAsync();
             }
             catch (Exception ex)
             {

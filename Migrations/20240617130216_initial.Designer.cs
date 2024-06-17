@@ -11,8 +11,8 @@ using WebCrawler.EF;
 namespace WebCrawler.Migrations
 {
     [DbContext(typeof(WebCrawlerContext))]
-    [Migration("20240606213200_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20240617130216_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
