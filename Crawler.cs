@@ -3,8 +3,8 @@ using WebCrawler.EF;
 using WebCrawler.Models;
 using log4net;
 using log4net.Config;
-using System.Net;
 using WebCrawler.Exceptions;
+using WebCrawler.Services;
 namespace WebCrawler
 {
     public class Crawler
@@ -12,7 +12,6 @@ namespace WebCrawler
         private HttpClient Client { get; set; }
         public string FilePathVisitados { get; set; }
         Repository Repository { get; set; }
-        private readonly static ILog log = LogManager.GetLogger(typeof(Crawler));
 
 
         public Crawler(HttpClient client, string filePathVisitados, Repository repository)
@@ -24,13 +23,11 @@ namespace WebCrawler
 
         public string ExtrairInformacoes(string html)
         {
-            BasicConfigurator.Configure();
             return $"Informações encontradas: {html[..100]}";
         }
 
         public async Task<string> FazerRequisicao(string url)
         {
-            BasicConfigurator.Configure();
 
             try
             {
@@ -41,12 +38,12 @@ namespace WebCrawler
             }
             catch(Exception ex) 
             {
-                CrawlerExceptions.Exceptions(ex);
+                await CrawlerExceptions.Exceptions(ex);
                 return string.Empty;
             }
         }
 
-        public string[] ExtractLinks(string html, string baseUrl)
+        public async Task<string[]> ExtractLinksAsync(string html, string baseUrl)
         {
             var links = new List<string>();
             var web = new HtmlDocument();
@@ -69,7 +66,7 @@ namespace WebCrawler
                         }
                         catch (Exception ex)
                         {
-                            CrawlerExceptions.Exceptions(ex);
+                            await CrawlerExceptions.Exceptions(ex);
                             
                         }
                     }
@@ -79,8 +76,6 @@ namespace WebCrawler
         }
         public async Task Executar(List<string> urls, string informacaoProcurada)
         {
-            GerenciadorDeVisitados gerenciador = new GerenciadorDeVisitados(FilePathVisitados);
-
             BasicConfigurator.Configure();
             foreach (var url in urls)
             {
@@ -91,7 +86,7 @@ namespace WebCrawler
                     {
                         break;
                     }
-                    if (gerenciador.VerificarSeJaFoiVisitado(url).Result)
+                    if (ArquivoService.VerificarSeTemOConteudoNoAquivo(url,FilePathVisitados).Result)
                     {
                         Console.WriteLine("Site já visitado: " + url);
                         break;
@@ -113,9 +108,9 @@ namespace WebCrawler
                     }
 
                     await Repository.Create(new Site(url, informacoes,informacaoProcurada));
-                    await gerenciador.MarcarComoVisitadoAsync(url);
+                    await ArquivoService.GravarNoArquivoAsync(url,FilePathVisitados);
 
-                    var links = ExtractLinks(html, url);
+                    var links = await ExtractLinksAsync(html, url);
                     if (links.Length == 0)
                     {
                         Console.WriteLine("Nenhum link encontrado em: " + url);

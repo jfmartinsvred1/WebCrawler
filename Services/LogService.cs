@@ -9,6 +9,18 @@ namespace WebCrawler.Services
 {
     public class LogService
     {
-        private readonly static ILog log = LogManager.GetLogger(typeof(Crawler));
+        public LogService()
+        {
+            FileName = $"C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\Logs\\Log-{DateTime.Now.ToString("dd-MM-yyyy")}.txt";
+        }
+
+        private readonly string FileName;
+        public async Task GerarErrorLog(string mensagem)
+        {
+            ArquivoService.CriarNovoArquivo(FileName);
+            await ArquivoService.GravarNoArquivoAsync(mensagem, FileName);
+        }
+
     }
+
 }

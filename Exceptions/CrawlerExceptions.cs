@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WebCrawler.Services;
 
 namespace WebCrawler.Exceptions
 {
     public class CrawlerExceptions
     {
-        public static void Exceptions(Exception ex)
+        public static async Task Exceptions(Exception ex)
         {
+            var logService = new LogService();
             switch (ex.GetType().Name)
             {
-                case "HttpRequestException":
-                    Console.WriteLine("Error no servidor destino...");
-                    break;
+                //case "HttpRequestException":
+                //    await logService.GerarErrorLog("[Erro] no servidor destino...");
+                //    break;
                 default:
-                    Console.WriteLine("Erro "+ ex.GetType().Name);
+                    await logService.GerarErrorLog("[Erro]" + ex.GetType().Name + ex.InnerException);
                     break;
             }
         }

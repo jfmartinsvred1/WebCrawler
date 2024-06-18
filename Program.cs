@@ -1,11 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using WebCrawler;
 using WebCrawler.EF;
-using WebCrawler.Exceptions;
 
 HttpClient client = new HttpClient();
 var visitados = "C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\visitados.txt";
-//var logs = "C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\log.txt";
 
 
 client.Timeout = TimeSpan.FromSeconds(20);
@@ -28,3 +26,4 @@ Console.WriteLine($"Informação A Ser Procurada: {informacao}");
 Crawler crawler = new Crawler(client, visitados, repository);
 
 await crawler.Executar(urlsIniciais.ToList(), informacao);
+
