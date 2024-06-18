@@ -16,7 +16,7 @@ namespace WebCrawler.EF
         {
             try
             {
-                Context.Sites.AddAsync(site);
+                await Context.Sites.AddAsync(site);
                 await Context.SaveChangesAsync();
             }
             catch (Exception ex)

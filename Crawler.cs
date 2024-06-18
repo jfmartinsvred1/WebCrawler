@@ -3,6 +3,8 @@ using WebCrawler.EF;
 using WebCrawler.Models;
 using log4net;
 using log4net.Config;
+using System.Net;
+using WebCrawler.Exceptions;
 namespace WebCrawler
 {
     public class Crawler
@@ -26,10 +28,8 @@ namespace WebCrawler
             return $"Informações encontradas: {html[..100]}";
         }
 
-                public async Task<string> FazerRequisicao(string url)
+        public async Task<string> FazerRequisicao(string url)
         {
-            //Client.Timeout = TimeSpan.FromSeconds(5);
-            //comentei esse timeout aqui po que ele gera erro, voce ja configurou no inicio na configuracao do httpclient
             BasicConfigurator.Configure();
 
             try
@@ -39,9 +39,9 @@ namespace WebCrawler
                 var responsebody = await response.Content.ReadAsStringAsync();
                 return responsebody;
             }
-            catch (HttpRequestException ex)
+            catch(Exception ex) 
             {
-                Console.WriteLine("Erro na requisição " + ex.Message);
+                CrawlerExceptions.Exceptions(ex);
                 return string.Empty;
             }
         }
@@ -69,7 +69,7 @@ namespace WebCrawler
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("Erro ao extrair links " + ex.Message);
+                            CrawlerExceptions.Exceptions(ex);
                             
                         }
                     }
@@ -112,7 +112,7 @@ namespace WebCrawler
                         Console.WriteLine($"Informação encontrada em {url}: {informacaoProcurada}");
                     }
 
-                    await Repository.Create(new Site(url, informacoes));
+                    await Repository.Create(new Site(url, informacoes,informacaoProcurada));
                     await gerenciador.MarcarComoVisitadoAsync(url);
 
                     var links = ExtractLinks(html, url);
