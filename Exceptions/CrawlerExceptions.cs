@@ -13,7 +13,7 @@ namespace WebCrawler.Exceptions
                 //    await logService.GerarErrorLog("[Erro] no servidor destino...");
                 //    break;
                 default:
-                    await logService.GerarErrorLog("[Erro]" + ex.GetType().Name + ex.InnerException);
+                    await logService.GerarErrorLog($"[Erro] - {DateTime.Now.ToString("hh-mm")} - {ex.GetType().Name}");
                     break;
             }
         }

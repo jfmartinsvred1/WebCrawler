@@ -1,8 +1,6 @@
 ﻿using HtmlAgilityPack;
 using WebCrawler.EF;
 using WebCrawler.Models;
-using log4net;
-using log4net.Config;
 using WebCrawler.Exceptions;
 using WebCrawler.Services;
 namespace WebCrawler
@@ -19,11 +17,6 @@ namespace WebCrawler
             Client = client;
             FilePathVisitados = filePathVisitados;
             Repository = repository;
-        }
-
-        public string ExtrairInformacoes(string html)
-        {
-            return $"Informações encontradas: {html[..100]}";
         }
 
         public async Task<string> FazerRequisicao(string url)
@@ -48,7 +41,6 @@ namespace WebCrawler
             var links = new List<string>();
             var web = new HtmlDocument();
             web.LoadHtml(html);
-            BasicConfigurator.Configure();
 
             var anchorTags = web.DocumentNode.SelectNodes("//a[@href]");
             if (anchorTags != null)
@@ -76,15 +68,15 @@ namespace WebCrawler
         }
         public async Task Executar(List<string> urls, string informacaoProcurada)
         {
-            BasicConfigurator.Configure();
             foreach (var url in urls)
             {
                 int tentativas = 0;
                 while (tentativas < 3)
                 {
-                    if (url.Contains("https://l.facebook.com"))
+                    
+                    if(!File.Exists(FilePathVisitados)) 
                     {
-                        break;
+                        ArquivoService.CriarNovoArquivo(FilePathVisitados);
                     }
                     if (ArquivoService.VerificarSeTemOConteudoNoAquivo(url,FilePathVisitados).Result)
                     {
@@ -101,13 +93,13 @@ namespace WebCrawler
                         break;
                     }
 
-                    var informacoes = ExtrairInformacoes(html);
-                    if (informacoes.Contains(informacaoProcurada))
+                    if (html.Contains(informacaoProcurada))
                     {
                         Console.WriteLine($"Informação encontrada em {url}: {informacaoProcurada}");
                     }
 
-                    await Repository.Create(new Site(url, informacoes,informacaoProcurada));
+                    await Repository.Create(new Site(url, html,informacaoProcurada));
+
                     await ArquivoService.GravarNoArquivoAsync(url,FilePathVisitados);
 
                     var links = await ExtractLinksAsync(html, url);
@@ -118,27 +110,13 @@ namespace WebCrawler
                     }
 
                     
-                    var linksAleatorios = EscolherLinksAleatorios(links.ToList());
+                    var linksAleatorios = LinkService.EscolherLinksAleatorios(links.ToList());
                     await Executar(linksAleatorios, informacaoProcurada);
 
                     break; 
                 }
             }
         }
-        static List<string> EscolherLinksAleatorios(List<string> links)
-        {
-            int numLinksParaEscolher = Math.Min(5, links.Count);
-            var linksAleatorios = new List<string>();
-            var random = new Random();
-            BasicConfigurator.Configure();
-            for (int i = 0; i < numLinksParaEscolher; i++)
-            {
-                int indiceAleatorio = random.Next(links.Count);
-                linksAleatorios.Add(links[indiceAleatorio]);
-                links.RemoveAt(indiceAleatorio); 
-            }
-
-            return linksAleatorios;
-        }
+        
     }
 }
