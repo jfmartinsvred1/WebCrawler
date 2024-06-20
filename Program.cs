@@ -6,7 +6,7 @@ HttpClient client = new HttpClient();
 var visitados = "C:\\Users\\Joao\\Desktop\\Projetos\\WebCrawler\\WebCrawler\\visitados.txt";
 
 
-client.Timeout = TimeSpan.FromSeconds(20);
+client.Timeout = TimeSpan.FromSeconds(10);
 var builder = new ConfigurationBuilder().AddUserSecrets<Program>();
 IConfiguration configuration = builder.Build();
 WebCrawlerContext context = new WebCrawlerContext();

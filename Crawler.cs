@@ -36,36 +36,6 @@ namespace WebCrawler
             }
         }
 
-        public async Task<string[]> ExtractLinksAsync(string html, string baseUrl)
-        {
-            var links = new List<string>();
-            var web = new HtmlDocument();
-            web.LoadHtml(html);
-
-            var anchorTags = web.DocumentNode.SelectNodes("//a[@href]");
-            if (anchorTags != null)
-            {
-                foreach (var tag in anchorTags)
-                {
-                    string href = tag.GetAttributeValue("href", string.Empty);
-                    if (!string.IsNullOrEmpty(href) && !href.StartsWith("#"))
-                    {
-                        try
-                        {
-                            Uri baseUri = new Uri(baseUrl);
-                            Uri absoluteUri = new Uri(baseUri, href);
-                            links.Add(absoluteUri.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            await CrawlerExceptions.Exceptions(ex);
-                            
-                        }
-                    }
-                }
-            }
-            return links.ToArray();
-        }
         public async Task Executar(List<string> urls, string informacaoProcurada)
         {
             foreach (var url in urls)
@@ -73,7 +43,10 @@ namespace WebCrawler
                 int tentativas = 0;
                 while (tentativas < 3)
                 {
-                    
+                    if (LinkService.VerificarSeOLinkEProibido(url))
+                    {
+                        break;
+                    }
                     if(!File.Exists(FilePathVisitados)) 
                     {
                         ArquivoService.CriarNovoArquivo(FilePathVisitados);
@@ -102,7 +75,7 @@ namespace WebCrawler
 
                     await ArquivoService.GravarNoArquivoAsync(url,FilePathVisitados);
 
-                    var links = await ExtractLinksAsync(html, url);
+                    var links = await LinkService.ExtractLinksAsync(html, url);
                     if (links.Length == 0)
                     {
                         Console.WriteLine("Nenhum link encontrado em: " + url);
