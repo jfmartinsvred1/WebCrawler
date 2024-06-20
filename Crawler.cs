@@ -1,8 +1,6 @@
 ﻿using HtmlAgilityPack;
 using WebCrawler.EF;
 using WebCrawler.Models;
-using log4net;
-using log4net.Config;
 using WebCrawler.Exceptions;
 using WebCrawler.Services;
 namespace WebCrawler
@@ -19,11 +17,6 @@ namespace WebCrawler
             Client = client;
             FilePathVisitados = filePathVisitados;
             Repository = repository;
-        }
-
-        public string ExtrairInformacoes(string html)
-        {
-            return $"Informações encontradas: {html[..100]}";
         }
 
         public async Task<string> FazerRequisicao(string url)
@@ -43,48 +36,20 @@ namespace WebCrawler
             }
         }
 
-        public async Task<string[]> ExtractLinksAsync(string html, string baseUrl)
-        {
-            var links = new List<string>();
-            var web = new HtmlDocument();
-            web.LoadHtml(html);
-            BasicConfigurator.Configure();
-
-            var anchorTags = web.DocumentNode.SelectNodes("//a[@href]");
-            if (anchorTags != null)
-            {
-                foreach (var tag in anchorTags)
-                {
-                    string href = tag.GetAttributeValue("href", string.Empty);
-                    if (!string.IsNullOrEmpty(href) && !href.StartsWith("#"))
-                    {
-                        try
-                        {
-                            Uri baseUri = new Uri(baseUrl);
-                            Uri absoluteUri = new Uri(baseUri, href);
-                            links.Add(absoluteUri.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            await CrawlerExceptions.Exceptions(ex);
-                            
-                        }
-                    }
-                }
-            }
-            return links.ToArray();
-        }
         public async Task Executar(List<string> urls, string informacaoProcurada)
         {
-            BasicConfigurator.Configure();
             foreach (var url in urls)
             {
                 int tentativas = 0;
                 while (tentativas < 3)
                 {
-                    if (url.Contains("https://l.facebook.com"))
+                    if (LinkService.VerificarSeOLinkEProibido(url))
                     {
                         break;
+                    }
+                    if(!File.Exists(FilePathVisitados)) 
+                    {
+                        ArquivoService.CriarNovoArquivo(FilePathVisitados);
                     }
                     if (ArquivoService.VerificarSeTemOConteudoNoAquivo(url,FilePathVisitados).Result)
                     {
@@ -101,16 +66,16 @@ namespace WebCrawler
                         break;
                     }
 
-                    var informacoes = ExtrairInformacoes(html);
-                    if (informacoes.Contains(informacaoProcurada))
+                    if (html.Contains(informacaoProcurada))
                     {
                         Console.WriteLine($"Informação encontrada em {url}: {informacaoProcurada}");
                     }
 
-                    await Repository.Create(new Site(url, informacoes,informacaoProcurada));
+                    await Repository.Create(new Site(url, html,informacaoProcurada));
+
                     await ArquivoService.GravarNoArquivoAsync(url,FilePathVisitados);
 
-                    var links = await ExtractLinksAsync(html, url);
+                    var links = await LinkService.ExtractLinksAsync(html, url);
                     if (links.Length == 0)
                     {
                         Console.WriteLine("Nenhum link encontrado em: " + url);
@@ -118,27 +83,13 @@ namespace WebCrawler
                     }
 
                     
-                    var linksAleatorios = EscolherLinksAleatorios(links.ToList());
+                    var linksAleatorios = LinkService.EscolherLinksAleatorios(links.ToList());
                     await Executar(linksAleatorios, informacaoProcurada);
 
                     break; 
                 }
             }
         }
-        static List<string> EscolherLinksAleatorios(List<string> links)
-        {
-            int numLinksParaEscolher = Math.Min(5, links.Count);
-            var linksAleatorios = new List<string>();
-            var random = new Random();
-            BasicConfigurator.Configure();
-            for (int i = 0; i < numLinksParaEscolher; i++)
-            {
-                int indiceAleatorio = random.Next(links.Count);
-                linksAleatorios.Add(links[indiceAleatorio]);
-                links.RemoveAt(indiceAleatorio); 
-            }
-
-            return linksAleatorios;
-        }
+        
     }
 }

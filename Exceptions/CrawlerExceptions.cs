@@ -7,15 +7,9 @@ namespace WebCrawler.Exceptions
         public static async Task Exceptions(Exception ex)
         {
             var logService = new LogService();
-            switch (ex.GetType().Name)
-            {
-                //case "HttpRequestException":
-                //    await logService.GerarErrorLog("[Erro] no servidor destino...");
-                //    break;
-                default:
-                    await logService.GerarErrorLog("[Erro]" + ex.GetType().Name + ex.InnerException);
-                    break;
-            }
+
+            await logService.GerarErrorLog($"[Erro] - {DateTime.Now.ToString("hh-mm")} - {ex.GetType().Name}");
+
         }
 
     }
